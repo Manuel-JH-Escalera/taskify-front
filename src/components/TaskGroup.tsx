@@ -1,8 +1,9 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import { useDroppable } from "@dnd-kit/core";
 import DraggableTask from "./DraggableTask";
+import type { TaskGroupProps } from "../types/common";
 
-function TaskGroup({ id, taskGroupTitle, tasks }) {
+function TaskGroup({ id, taskGroupTitle, tasks }: TaskGroupProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: id,
   });

@@ -1,14 +1,20 @@
 import { Card, CardContent, Stack, Typography, Divider } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { CSSProperties } from "react";
+import type { Task } from "../types/common";
 
-function DraggableTask({ task }) {
+interface DraggableTaskProps {
+  task: Task;
+}
+
+function DraggableTask({ task }: DraggableTaskProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id,
     });
 
-  const style = transform
+  const style: CSSProperties | undefined = transform
     ? {
         transform: CSS.Translate.toString(transform),
         zIndex: 999,

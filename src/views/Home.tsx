@@ -10,27 +10,30 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import { Card, CardContent } from "@mui/material";
+import type { Task, ContainerId } from "../types/common";
 
 function Home() {
-  const [todos, setTodos] = useState([
+  const [todos, setTodos] = useState<Task[]>([
     {
-      id: "task-1",
+      id: 1,
       name: "task 1",
       description: "lorem",
     },
     {
-      id: "task-2",
+      id: 2,
       name: "task 2",
       description: "lorem",
     },
   ]);
-  const [inProgress, setInProgress] = useState([]);
-  const [finished, setFinished] = useState([]);
+  const [inProgress, setInProgress] = useState<Task[]>([]);
+  const [finished, setFinished] = useState<Task[]>([]);
 
-  const [activeId, setActiveId] = useState(null);
-  const [activeTask, setActiveTask] = useState(null);
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -48,26 +51,26 @@ function Home() {
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
   // Función para encontrar la tarea en cualquier lista
-  const findTask = (id) => {
+  const findTask = (id: number): Task | undefined => {
     const allTasks = [...todos, ...inProgress, ...finished];
     return allTasks.find((task) => task.id === id);
   };
 
   // Función para encontrar el contenedor de un elemento
-  const findContainer = (id) => {
+  const findContainer = (id: number): ContainerId | undefined => {
     if (todos.find((task) => task.id === id)) return "todos";
     if (inProgress.find((task) => task.id === id)) return "inProgress";
     if (finished.find((task) => task.id === id)) return "finished";
-    return null;
+    return undefined;
   };
 
-  const handleDragStart = (event) => {
+  const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveId(active.id);
-    setActiveTask(findTask(active.id));
+    setActiveId(active.id as number);
+    setActiveTask(findTask(active.id as number) || null);
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over) {
@@ -76,8 +79,8 @@ function Home() {
       return;
     }
 
-    const sourceContainer = findContainer(active.id);
-    const destinationContainer = over.id;
+    const sourceContainer = findContainer(active.id as number);
+    const destinationContainer = over.id as ContainerId;
 
     // Si no se movió a un contenedor diferente
     if (sourceContainer === destinationContainer) {
@@ -87,7 +90,13 @@ function Home() {
     }
 
     // Encontrar el elemento a mover
-    const task = findTask(active.id);
+    const task = findTask(active.id as number);
+
+    if (!task) {
+      setActiveId(null);
+      setActiveTask(null);
+      return;
+    }
 
     // Remover de la lista original
     if (sourceContainer === "todos") {
