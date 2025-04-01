@@ -1,17 +1,12 @@
 import { Card, CardContent, Stack, Typography, Divider } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect } from "react";
 
 function DraggableTask({ task }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id,
     });
-
-  useEffect(() => {
-    console.log("isDragging", isDragging);
-  }, [isDragging]);
 
   const style = transform
     ? {
@@ -32,6 +27,7 @@ function DraggableTask({ task }) {
         cursor: isDragging ? "grab" : "pointer",
         opacity: isDragging ? 0 : 1, // Redundante pero por si el style inline no funciona
         visibility: isDragging ? "hidden" : "visible", // Alternativa que asegura que no ocupe espacio
+        touchAction: "none",
       }}
     >
       <CardContent>

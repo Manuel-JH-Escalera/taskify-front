@@ -1,7 +1,16 @@
 import { Stack, Divider, Typography, Grid } from "@mui/material";
 import { useState } from "react";
 import TaskGroup from "../components/TaskGroup";
-import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { Card, CardContent } from "@mui/material";
 
 function Home() {
@@ -22,6 +31,21 @@ function Home() {
 
   const [activeId, setActiveId] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
+
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 10,
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      distance: 10,
+      delay: 250,
+    },
+  });
+  const keyboardSensor = useSensor(KeyboardSensor);
+
+  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
   // Función para encontrar la tarea en cualquier lista
   const findTask = (id) => {
@@ -95,6 +119,7 @@ function Home() {
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        sensors={sensors}
       >
         <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid size={{ xs: 12, md: 4 }} mt={3}>
@@ -119,7 +144,7 @@ function Home() {
         {/* Overlay para mostrar el elemento que se está arrastrando */}
         <DragOverlay>
           {activeId && activeTask ? (
-            <Card>
+            <Card sx={{ touchAction: "none" }}>
               <CardContent>
                 <Stack spacing={1}>
                   <Typography variant="body1">{activeTask.name}</Typography>

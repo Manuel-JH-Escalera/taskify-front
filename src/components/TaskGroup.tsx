@@ -21,7 +21,7 @@ function TaskGroup({ id, taskGroupTitle, tasks }) {
     >
       <Typography variant="h6">{taskGroupTitle}</Typography>
 
-      <Stack spacing={{ xs: 2, md: 3 }} sx={{ minHeight: "200px", padding: 1 }}>
+      <Stack spacing={{ xs: 2, md: 3 }} sx={{ minHeight: "200px" }}>
         {tasks.length > 0 &&
           tasks.map((task) => <DraggableTask key={task.id} task={task} />)}
       </Stack>
