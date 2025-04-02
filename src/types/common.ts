@@ -3,9 +3,11 @@ import { ReactNode } from "react";
 import { Breakpoint } from "@mui/material/styles";
 
 interface Task {
-  id: number;
+  id: string;
   name: string;
   description: string;
+  status: "TO_DO" | "TODO" | "IN_PROGRESS" | "COMPLETED";
+  created_at: string;
 }
 
 type ContainerId = "todos" | "inProgress" | "finished";

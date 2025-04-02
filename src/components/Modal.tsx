@@ -9,7 +9,6 @@ export default function Modal({
   open,
   title,
   body,
-  footer,
   handleClose,
   size = "md",
 }: ModalTaskProps) {

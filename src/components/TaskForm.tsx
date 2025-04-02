@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react";
 import { TextField, Stack, Button, Box } from "@mui/material";
 import { TaskFormProps } from "../types/common";
+import useCreateTask from "../hooks/useCreateTask";
+import { useQueryClient } from "@tanstack/react-query";
+import useUpdateTask from "../hooks/useUpdateTask";
+import { enqueueSnackbar } from "notistack";
 
-export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
+export default function TaskForm({ task, onCancel }: TaskFormProps) {
+  const queryClient = useQueryClient();
+  const { mutate: mutateCreateTask, isPending: isPendingCreateTask } =
+    useCreateTask();
+  const { mutate: mutateUpdateTask, isPending: isPendingUpdateTask } =
+    useUpdateTask();
+
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -11,7 +21,6 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
     description: "",
   });
 
-  // Cargar los datos de la tarea cuando cambia la tarea seleccionada
   useEffect(() => {
     if (task) {
       setFormData({
@@ -32,11 +41,37 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (task) {
-      onSubmit({
-        ...task,
-        name: formData.name,
-        description: formData.description,
-      });
+      mutateUpdateTask(
+        { ...formData, id: task?.id },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+            enqueueSnackbar("Task updated successfully", {
+              variant: "success",
+            });
+            onCancel();
+          },
+          onError: () => {
+            enqueueSnackbar("Error updating task", { variant: "error" });
+          },
+        }
+      );
+    } else {
+      mutateCreateTask(
+        { ...formData, status: "TO_DO" },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+            enqueueSnackbar("Task created successfully", {
+              variant: "success",
+            });
+            onCancel();
+          },
+          onError: () => {
+            enqueueSnackbar("Error creating task", { variant: "error" });
+          },
+        }
+      );
     }
   };
 
@@ -65,7 +100,12 @@ export default function TaskForm({ task, onSubmit, onCancel }: TaskFormProps) {
           <Button variant="outlined" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" color="success">
+          <Button
+            type="submit"
+            variant="contained"
+            color="success"
+            disabled={isPendingCreateTask || isPendingUpdateTask}
+          >
             {task ? "Update" : "Create"}
           </Button>
         </Box>

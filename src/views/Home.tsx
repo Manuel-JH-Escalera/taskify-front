@@ -30,31 +30,22 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import TaskForm from "../components/TaskForm";
 import AddIcon from "@mui/icons-material/Add";
+import useTasks from "../hooks/useTasks";
+import { useQueryClient } from "@tanstack/react-query";
+import useUpdateTask from "../hooks/useUpdateTask";
+import useDeleteTask from "../hooks/useDeleteTask";
+import { enqueueSnackbar } from "notistack";
 
 function Home() {
-  const [todos, setTodos] = useState<Task[]>([
-    {
-      id: 1,
-      name: "Task 1",
-      description: "lorem",
-    },
-    {
-      id: 2,
-      name: "Task 2",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit class, hendrerit turpis nisi sed gravida duis litora pellentesque, nisl quisque iaculis potenti ligula ante fermentum. Inceptos taciti rhoncus condimentum rutrum imperdiet quisque tortor malesuada, natoque euismod nam ad cursus hac vehicula montes odio, bibendum dui justo curae phasellus ornare a. Orci odio dapibus duis ut varius pretium congue, netus quisque pulvinar justo conubia tincidunt sed, natoque est accumsan sollicitudin cursus dis.",
-    },
-    {
-      id: 3,
-      name: "Task 3",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit class.",
-    },
-  ]);
-  const [inProgress, setInProgress] = useState<Task[]>([]);
-  const [finished, setFinished] = useState<Task[]>([]);
-
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  const { data: tasks } = useTasks();
+  const { mutate: mutateUpdateTask } = useUpdateTask();
+  const { mutate: mutateDeleteTask, isPending: isPendingDeleteTask } =
+    useDeleteTask();
+  const [todoTasks, setTodoTasks] = useState<Task[]>([]);
+  const [inProgressTasks, setInProgressTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalNewTask, setModalNewTask] = useState(false);
@@ -62,42 +53,67 @@ function Home() {
   const [modalTaskDelete, setModalTaskDelete] = useState(false);
 
   useEffect(() => {
-    console.log("selected task", selectedTask);
-  }, [selectedTask]);
+    if (!tasks?.data || !Array.isArray(tasks.data)) return;
+
+    const sortByCreationDate = (a: Task, b: Task) => {
+      return (
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    };
+
+    setTodoTasks(
+      tasks.data
+        .filter(
+          (task: Task) => task.status === "TO_DO" || task.status === "TODO"
+        )
+        .sort(sortByCreationDate)
+    );
+
+    setInProgressTasks(
+      tasks.data
+        .filter((task: Task) => task.status === "IN_PROGRESS")
+        .sort(sortByCreationDate)
+    );
+
+    setCompletedTasks(
+      tasks.data
+        .filter((task: Task) => task.status === "COMPLETED")
+        .sort(sortByCreationDate)
+    );
+  }, [tasks]);
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
       distance: 10,
     },
   });
+
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
       distance: 10,
       delay: 250,
     },
   });
-  const keyboardSensor = useSensor(KeyboardSensor);
 
+  const keyboardSensor = useSensor(KeyboardSensor);
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
-  // Función para encontrar la tarea en cualquier lista
-  const findTask = (id: number): Task | undefined => {
-    const allTasks = [...todos, ...inProgress, ...finished];
+  const findTask = (id: string): Task | undefined => {
+    const allTasks = [...todoTasks, ...inProgressTasks, ...completedTasks];
     return allTasks.find((task) => task.id === id);
   };
 
-  // Función para encontrar el contenedor de un elemento
-  const findContainer = (id: number): ContainerId | undefined => {
-    if (todos.find((task) => task.id === id)) return "todos";
-    if (inProgress.find((task) => task.id === id)) return "inProgress";
-    if (finished.find((task) => task.id === id)) return "finished";
+  const findContainer = (id: string): ContainerId | undefined => {
+    if (todoTasks.find((task) => task.id === id)) return "todos";
+    if (inProgressTasks.find((task) => task.id === id)) return "inProgress";
+    if (completedTasks.find((task) => task.id === id)) return "finished";
     return undefined;
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveId(active.id as number);
-    setActiveTask(findTask(active.id as number) || null);
+    setActiveId(active.id as string);
+    setActiveTask(findTask(active.id as string) || null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -109,18 +125,16 @@ function Home() {
       return;
     }
 
-    const sourceContainer = findContainer(active.id as number);
+    const sourceContainer = findContainer(active.id as string);
     const destinationContainer = over.id as ContainerId;
 
-    // Si no se movió a un contenedor diferente
     if (sourceContainer === destinationContainer) {
       setActiveId(null);
       setActiveTask(null);
       return;
     }
 
-    // Encontrar el elemento a mover
-    const task = findTask(active.id as number);
+    const task = findTask(active.id as string);
 
     if (!task) {
       setActiveId(null);
@@ -128,23 +142,50 @@ function Home() {
       return;
     }
 
-    // Remover de la lista original
+    const statusMap: Record<
+      ContainerId,
+      "TO_DO" | "IN_PROGRESS" | "COMPLETED"
+    > = {
+      todos: "TO_DO",
+      inProgress: "IN_PROGRESS",
+      finished: "COMPLETED",
+    };
+
+    const updatedTask = {
+      ...task,
+      status: statusMap[destinationContainer],
+    };
+
+    let newTodoTasks = [...todoTasks];
+    let newInProgressTasks = [...inProgressTasks];
+    let newCompletedTasks = [...completedTasks];
+
     if (sourceContainer === "todos") {
-      setTodos(todos.filter((t) => t.id !== active.id));
+      newTodoTasks = newTodoTasks.filter((t) => t.id !== task.id);
     } else if (sourceContainer === "inProgress") {
-      setInProgress(inProgress.filter((t) => t.id !== active.id));
+      newInProgressTasks = newInProgressTasks.filter((t) => t.id !== task.id);
     } else if (sourceContainer === "finished") {
-      setFinished(finished.filter((t) => t.id !== active.id));
+      newCompletedTasks = newCompletedTasks.filter((t) => t.id !== task.id);
     }
 
-    // Añadir a la nueva lista
     if (destinationContainer === "todos") {
-      setTodos([...todos, task]);
+      newTodoTasks.push(updatedTask);
     } else if (destinationContainer === "inProgress") {
-      setInProgress([...inProgress, task]);
+      newInProgressTasks.push(updatedTask);
     } else if (destinationContainer === "finished") {
-      setFinished([...finished, task]);
+      newCompletedTasks.push(updatedTask);
     }
+
+    setTodoTasks(newTodoTasks);
+    setInProgressTasks(newInProgressTasks);
+    setCompletedTasks(newCompletedTasks);
+
+    mutateUpdateTask(updatedTask, {
+      onError: (error) => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        console.error("Error updating task status:", error);
+      },
+    });
 
     setActiveId(null);
     setActiveTask(null);
@@ -160,27 +201,35 @@ function Home() {
     setSelectedTask(null);
   };
 
-  // Nueva función para manejar la actualización de tareas
   const handleUpdateTask = (updatedTask: Task) => {
     const container = findContainer(updatedTask.id);
 
     if (container === "todos") {
-      setTodos(
-        todos.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+      setTodoTasks(
+        todoTasks.map((task) =>
+          task.id === updatedTask.id ? updatedTask : task
+        )
       );
     } else if (container === "inProgress") {
-      setInProgress(
-        inProgress.map((task) =>
+      setInProgressTasks(
+        inProgressTasks.map((task) =>
           task.id === updatedTask.id ? updatedTask : task
         )
       );
     } else if (container === "finished") {
-      setFinished(
-        finished.map((task) =>
+      setCompletedTasks(
+        completedTasks.map((task) =>
           task.id === updatedTask.id ? updatedTask : task
         )
       );
     }
+
+    mutateUpdateTask(updatedTask, {
+      onError: (error) => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        console.error("Error updating task:", error);
+      },
+    });
 
     handleModalTaskClose();
   };
@@ -204,7 +253,25 @@ function Home() {
   };
 
   const handleCreateTask = () => {
-    console.log("task");
+    handleModalCreateClose();
+  };
+
+  const handleDeleteTask = () => {
+    if (!selectedTask) return;
+
+    mutateDeleteTask(selectedTask.id, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        enqueueSnackbar("Task deleted successfully", {
+          variant: "success",
+        });
+        setModalTaskDelete(false);
+      },
+      onError: (error) => {
+        enqueueSnackbar("Error deleting task", { variant: "error" });
+        console.error(error);
+      },
+    });
   };
 
   return (
@@ -215,7 +282,7 @@ function Home() {
           type="submit"
           variant="contained"
           color="success"
-          onClick={() => handleModalCreateOpen()}
+          onClick={handleModalCreateOpen}
           size="medium"
           endIcon={<AddIcon />}
         >
@@ -234,41 +301,39 @@ function Home() {
             <TaskGroup
               id="todos"
               taskGroupTitle={"TO DO"}
-              tasks={todos}
+              tasks={todoTasks}
               handleModalTaskOpen={handleModalTaskOpen}
               handleModalDeleteOpen={handleModalDeleteOpen}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: { xs: 2, md: 0 } }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
             <TaskGroup
               id="inProgress"
               taskGroupTitle={"IN PROGRESS"}
-              tasks={inProgress}
+              tasks={inProgressTasks}
               handleModalTaskOpen={handleModalTaskOpen}
               handleModalDeleteOpen={handleModalDeleteOpen}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: { xs: 2, md: 0 } }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
             <TaskGroup
               id="finished"
-              taskGroupTitle={"FINISHED"}
-              tasks={finished}
+              taskGroupTitle={"COMPLETED"}
+              tasks={completedTasks}
               handleModalTaskOpen={handleModalTaskOpen}
               handleModalDeleteOpen={handleModalDeleteOpen}
             />
           </Grid>
         </Grid>
-
-        {/* Overlay para mostrar el elemento que se está arrastrando */}
         <DragOverlay>
           {activeId && activeTask ? (
             <Card sx={{ touchAction: "none" }}>
               <CardContent>
                 <Stack spacing={1}>
                   <Box
-                    display={"flex"}
-                    justifyContent={"space-between"}
-                    alignItems={"center"}
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
                   >
                     <Typography variant="h6">{activeTask.name}</Typography>
                     <Box>
@@ -291,12 +356,10 @@ function Home() {
           ) : null}
         </DragOverlay>
       </DndContext>
-
-      {/* Create task modal */}
       <Modal
         open={modalNewTask}
         handleClose={handleModalCreateClose}
-        title={`Create new task`}
+        title="Create new task"
         size="md"
         body={
           <TaskForm
@@ -305,8 +368,6 @@ function Home() {
           />
         }
       />
-
-      {/* Update task modal */}
       <Modal
         open={modalTaskOpen}
         handleClose={handleModalTaskClose}
@@ -320,8 +381,6 @@ function Home() {
           />
         }
       />
-
-      {/* Delete task modal */}
       <Modal
         open={modalTaskDelete}
         handleClose={handleModalDeleteClose}
@@ -338,7 +397,13 @@ function Home() {
               <Button variant="outlined" onClick={handleModalDeleteClose}>
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" color="error">
+              <Button
+                type="submit"
+                variant="contained"
+                color="error"
+                onClick={handleDeleteTask}
+                disabled={isPendingDeleteTask}
+              >
                 Delete
               </Button>
             </Box>
@@ -348,5 +413,4 @@ function Home() {
     </Stack>
   );
 }
-
 export default Home;
