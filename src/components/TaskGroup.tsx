@@ -3,7 +3,13 @@ import { useDroppable } from "@dnd-kit/core";
 import DraggableTask from "./DraggableTask";
 import type { TaskGroupProps } from "../types/common";
 
-function TaskGroup({ id, taskGroupTitle, tasks }: TaskGroupProps) {
+function TaskGroup({
+  id,
+  taskGroupTitle,
+  tasks,
+  handleModalTaskOpen,
+  handleModalDeleteOpen,
+}: TaskGroupProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: id,
   });
@@ -20,11 +26,17 @@ function TaskGroup({ id, taskGroupTitle, tasks }: TaskGroupProps) {
       }}
       ref={setNodeRef}
     >
-      <Typography variant="h6">{taskGroupTitle}</Typography>
-
       <Stack spacing={{ xs: 2, md: 3 }} sx={{ minHeight: "200px" }}>
+        <Typography variant="h5">{taskGroupTitle}</Typography>
         {tasks.length > 0 &&
-          tasks.map((task) => <DraggableTask key={task.id} task={task} />)}
+          tasks.map((task) => (
+            <DraggableTask
+              key={task.id}
+              task={task}
+              handleModalTaskOpen={handleModalTaskOpen}
+              handleModalDeleteOpen={handleModalDeleteOpen}
+            />
+          ))}
       </Stack>
     </Paper>
   );

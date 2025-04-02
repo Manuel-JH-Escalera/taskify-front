@@ -1,14 +1,24 @@
-import { Card, CardContent, Stack, Typography, Divider } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Stack,
+  Typography,
+  Divider,
+  IconButton,
+  Box,
+} from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { CSSProperties } from "react";
-import type { Task } from "../types/common";
+import type { DraggableTaskProps } from "../types/common";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
-interface DraggableTaskProps {
-  task: Task;
-}
-
-function DraggableTask({ task }: DraggableTaskProps) {
+function DraggableTask({
+  task,
+  handleModalTaskOpen,
+  handleModalDeleteOpen,
+}: DraggableTaskProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id,
@@ -38,8 +48,23 @@ function DraggableTask({ task }: DraggableTaskProps) {
     >
       <CardContent>
         <Stack spacing={1}>
-          <Typography variant="body1">{task.name}</Typography>
+          <Box
+            display={"flex"}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+          >
+            <Typography variant="h6">{task.name}</Typography>
+            <Box>
+              <IconButton>
+                <EditIcon onClick={() => handleModalTaskOpen(task)} />
+              </IconButton>
+              <IconButton>
+                <DeleteIcon onClick={() => handleModalDeleteOpen(task)} />
+              </IconButton>
+            </Box>
+          </Box>
           <Divider />
+          <Typography variant="body1">Description</Typography>
           <Typography variant="body2">{task.description}</Typography>
         </Stack>
       </CardContent>

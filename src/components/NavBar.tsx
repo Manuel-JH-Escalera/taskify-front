@@ -14,7 +14,7 @@ function NavBar() {
     <>
       <AppBar position="static">
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Task Board</Typography>
+          <Typography variant="h6">Taskify</Typography>
           <Box>
             <Button color="inherit">Home</Button>
             <Button color="inherit">Statistics</Button>
