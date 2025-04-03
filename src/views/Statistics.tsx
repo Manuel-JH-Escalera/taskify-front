@@ -136,7 +136,6 @@ function Statistics() {
     <Stack spacing={3}>
       <Typography variant="h3">Task Statistics</Typography>
       <Divider />
-      {}
       {!tasks?.data?.length ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body1">
