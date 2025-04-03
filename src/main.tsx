@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import NavBar from "./components/NavBar.tsx";
 import { AuthProvider } from "react-oidc-context";
 import App from "./views/Login.tsx";
+import NotFound from "./views/NotFound.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SnackbarProvider } from "notistack";
 import { Experimental_CssVarsProvider as CssVarsProvider } from "@mui/material/styles";
@@ -14,7 +15,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { theme } from "./theme/ThemeConfig";
 
 const queryClient = new QueryClient();
-
 const cognitoAuthConfig = {
   authority: import.meta.env.VITE_COGNITO_AUTHORITY,
   client_id: import.meta.env.VITE_COGNITO_CLIENT_ID,
@@ -39,6 +39,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route element={<NavBar />}>
                   <Route path="/" element={<Home />} />
                   <Route path="/statistics" element={<Statistics />} />
+                  <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
             </BrowserRouter>

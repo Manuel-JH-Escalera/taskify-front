@@ -8,6 +8,7 @@ import {
   Alert,
   AlertTitle,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import TaskGroup from "../components/TaskGroup";
@@ -38,7 +39,7 @@ import { enqueueSnackbar } from "notistack";
 
 function Home() {
   const queryClient = useQueryClient();
-  const { data: tasks } = useTasks();
+  const { data: tasks, isLoading: isLoadingTasks } = useTasks();
   const { mutate: mutateUpdateTask } = useUpdateTask();
   const { mutate: mutateDeleteTask, isPending: isPendingDeleteTask } =
     useDeleteTask();
@@ -290,72 +291,81 @@ function Home() {
         </Button>
       </Box>
       <Divider />
-      <DndContext
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        sensors={sensors}
-      >
-        <Grid container spacing={{ xs: 2, md: 3 }} pb={3}>
-          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
-            <TaskGroup
-              id="todos"
-              taskGroupTitle={"TO DO"}
-              tasks={todoTasks}
-              handleModalTaskOpen={handleModalTaskOpen}
-              handleModalDeleteOpen={handleModalDeleteOpen}
-            />
+      {isLoadingTasks ? (
+        <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
+          <Typography variant="h6" margin={1}>
+            Loading tasks...
+          </Typography>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <DndContext
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          sensors={sensors}
+        >
+          <Grid container spacing={{ xs: 2, md: 3 }} pb={3}>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
+              <TaskGroup
+                id="todos"
+                taskGroupTitle={"TO DO"}
+                tasks={todoTasks}
+                handleModalTaskOpen={handleModalTaskOpen}
+                handleModalDeleteOpen={handleModalDeleteOpen}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
+              <TaskGroup
+                id="inProgress"
+                taskGroupTitle={"IN PROGRESS"}
+                tasks={inProgressTasks}
+                handleModalTaskOpen={handleModalTaskOpen}
+                handleModalDeleteOpen={handleModalDeleteOpen}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
+              <TaskGroup
+                id="finished"
+                taskGroupTitle={"COMPLETED"}
+                tasks={completedTasks}
+                handleModalTaskOpen={handleModalTaskOpen}
+                handleModalDeleteOpen={handleModalDeleteOpen}
+              />
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
-            <TaskGroup
-              id="inProgress"
-              taskGroupTitle={"IN PROGRESS"}
-              tasks={inProgressTasks}
-              handleModalTaskOpen={handleModalTaskOpen}
-              handleModalDeleteOpen={handleModalDeleteOpen}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0 }}>
-            <TaskGroup
-              id="finished"
-              taskGroupTitle={"COMPLETED"}
-              tasks={completedTasks}
-              handleModalTaskOpen={handleModalTaskOpen}
-              handleModalDeleteOpen={handleModalDeleteOpen}
-            />
-          </Grid>
-        </Grid>
-        <DragOverlay>
-          {activeId && activeTask ? (
-            <Card sx={{ touchAction: "none" }}>
-              <CardContent>
-                <Stack spacing={1}>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography variant="h6">{activeTask.name}</Typography>
-                    <Box>
-                      <IconButton>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton>
-                        <DeleteIcon />
-                      </IconButton>
+          <DragOverlay>
+            {activeId && activeTask ? (
+              <Card sx={{ touchAction: "none" }}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Typography variant="h6">{activeTask.name}</Typography>
+                      <Box>
+                        <IconButton>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </Box>
-                  </Box>
-                  <Divider />
-                  <Typography variant="body1">Description</Typography>
-                  <Typography variant="body2">
-                    {activeTask.description}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+                    <Divider />
+                    <Typography variant="body1">Description</Typography>
+                    <Typography variant="body2">
+                      {activeTask.description}
+                    </Typography>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
       <Modal
         open={modalNewTask}
         handleClose={handleModalCreateClose}
@@ -403,6 +413,7 @@ function Home() {
                 color="error"
                 onClick={handleDeleteTask}
                 disabled={isPendingDeleteTask}
+                loading={isPendingDeleteTask}
               >
                 Delete
               </Button>

@@ -21,7 +21,7 @@ export const theme = createTheme({
     light: {
       palette: {
         primary: {
-          main: "#1976d2",
+          main: "#3f51b5",
         },
         secondary: {
           main: "#dc004e",
@@ -31,7 +31,7 @@ export const theme = createTheme({
           paper: "#ffffff",
         },
         taskGroup: {
-          background: "#f7f8f9",
+          background: "#e9eaec",
           dragOver: "#e6f7ff",
         },
       },

@@ -6,33 +6,71 @@ import {
   Box,
   IconButton,
   Stack,
-  useTheme,
+  Card,
+  CardContent,
+  CircularProgress,
 } from "@mui/material";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
-import { Outlet, Link } from "react-router";
+import { Outlet, Link, Navigate } from "react-router";
 import { useAuth } from "react-oidc-context";
-import { useNavigate } from "react-router";
-import { useEffect } from "react";
 import { useColorScheme } from "@mui/material/styles";
 import LogoutButton from "./LogoutButton";
 
 function NavBar() {
   const auth = useAuth();
-  const navigate = useNavigate();
   const { mode, setMode } = useColorScheme();
-
-  useEffect(() => {
-    if (!auth.isLoading) {
-      if (!auth.isAuthenticated) {
-        navigate("/login");
-      }
-    }
-  }, [auth, navigate]);
 
   const toggleColorMode = () => {
     setMode(mode === "light" ? "dark" : "light");
   };
+
+  if (auth.isLoading) {
+    return (
+      <Box
+        sx={{
+          width: "100vw",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "fixed",
+          top: 0,
+          left: 0,
+        }}
+      >
+        <Card
+          sx={{
+            width: { xs: "90%", sm: "70%", md: "50%", lg: "30%" },
+            minHeight: "240px",
+            display: "flex",
+          }}
+        >
+          <CardContent
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Stack
+              spacing={2}
+              justifyContent="center"
+              alignItems="center"
+              sx={{ height: "100%" }}
+            >
+              <CircularProgress />
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  if (!auth.isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <>

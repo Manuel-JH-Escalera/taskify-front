@@ -105,6 +105,7 @@ export default function TaskForm({ task, onCancel }: TaskFormProps) {
             variant="contained"
             color="success"
             disabled={isPendingCreateTask || isPendingUpdateTask}
+            loading={isPendingCreateTask || isPendingUpdateTask}
           >
             {task ? "Update" : "Create"}
           </Button>

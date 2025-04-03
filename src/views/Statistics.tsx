@@ -134,11 +134,10 @@ function Statistics() {
 
   return (
     <Stack spacing={3}>
-      <Typography variant="h4" gutterBottom>
-        Task Statistics
-      </Typography>
-
-      {!tasks?.data?.length ? (
+      <Typography variant="h3">Task Statistics</Typography>
+      <Divider />
+      {}
+      {tasks?.data?.length ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body1">
             No tasks available. Add some tasks to see statistics.

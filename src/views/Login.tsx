@@ -33,7 +33,12 @@ function Login() {
   const renderContent = () => {
     if (auth.isLoading) {
       return (
-        <Stack spacing={2} justifyContent="center" alignItems="center">
+        <Stack
+          spacing={2}
+          justifyContent="center"
+          alignItems="center"
+          sx={{ height: "100%", minHeight: "180px" }}
+        >
           <CircularProgress />
         </Stack>
       );
@@ -41,20 +46,29 @@ function Login() {
 
     if (auth.error) {
       return (
-        <Stack spacing={2} justifyContent="center" alignContent="center">
-          <Box>
-            <Alert severity="error">
-              <AlertTitle>Error</AlertTitle>
-              {auth.error.message || "Error getting session"}
-            </Alert>
-          </Box>
+        <Stack
+          spacing={2}
+          sx={{
+            height: "100%",
+            width: "100%",
+          }}
+        >
+          <Alert severity="error">
+            <AlertTitle>Error</AlertTitle>
+            {auth.error.message || "Error getting session"}
+          </Alert>
           <LoginButton />
         </Stack>
       );
     }
 
     return (
-      <Stack spacing={2} justifyContent="center" alignItems="center">
+      <Stack
+        spacing={2}
+        justifyContent="center"
+        alignItems="center"
+        sx={{ height: "100%" }}
+      >
         <LogoSection />
         <LoginButton />
       </Stack>
@@ -77,9 +91,19 @@ function Login() {
       <Card
         sx={{
           width: { xs: "90%", sm: "70%", md: "50%", lg: "30%" },
+          display: "flex",
         }}
       >
-        <CardContent>{renderContent()}</CardContent>
+        <CardContent
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {renderContent()}
+        </CardContent>
       </Card>
     </Box>
   );
