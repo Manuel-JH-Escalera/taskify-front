@@ -137,7 +137,7 @@ function Statistics() {
       <Typography variant="h3">Task Statistics</Typography>
       <Divider />
       {}
-      {tasks?.data?.length ? (
+      {!tasks?.data?.length ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body1">
             No tasks available. Add some tasks to see statistics.
